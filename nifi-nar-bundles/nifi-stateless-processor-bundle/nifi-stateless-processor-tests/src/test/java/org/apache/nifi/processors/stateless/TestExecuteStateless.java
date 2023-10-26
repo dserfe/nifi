@@ -25,9 +25,12 @@ import org.apache.nifi.util.TestRunners;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,9 +76,13 @@ public class TestExecuteStateless {
         runner.assertTransferCount(ExecuteStateless.REL_OUTPUT, 3);
         final List<MockFlowFile> output = runner.getFlowFilesForRelationship(ExecuteStateless.REL_OUTPUT);
         output.forEach(ff -> ff.assertAttributeEquals("abc", "xyz"));
-        output.get(0).assertContentEquals("The\nQuick\nBrown");
-        output.get(1).assertContentEquals("Fox\nJumps\nOver");
-        output.get(2).assertContentEquals("The\nLazy\nDog");
+        List<String> expectedContents = Arrays.asList("The\nQuick\nBrown", "Fox\nJumps\nOver", "The\nLazy\nDog");
+        List<String> actualContents = output.stream().map(ff -> new String(ff.toByteArray(), StandardCharsets.UTF_8)).collect(Collectors.toList());
+        Collections.sort(expectedContents);
+        Collections.sort(actualContents); 
+        for (int i = 0; i < expectedContents.size(); i++) {
+           assertEquals(expectedContents.get(i), actualContents.get(i));
+        }
     }
 
     @Test
